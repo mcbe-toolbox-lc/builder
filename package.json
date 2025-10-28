@@ -12,6 +12,16 @@
 		"build"
 	],
 	"type": "module",
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"build": "tsup",
+		"build:watch": "tsup --watch",
+		"lint": "tsc",
+		"clean": "shx rm -rf dist",
+		"format": "prettier --write .",
+		"prepack": "pnpm run build"
+	},
 	"devDependencies": {
 		"@types/node": "^22.18.12",
 		"prettier": "^3.6.2",
