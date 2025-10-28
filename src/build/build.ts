@@ -7,7 +7,9 @@ const _build = async (config: Config, signal?: AbortSignal): Promise<void> => {}
 /**
  * Builds the project based on the provided configuration.
  * @param config - Configuration object.
- * @param signal - Abort signal that aborts the build process.
+ * @param signal - Abort signal that aborts the operation.
+ * @returns A Promise that resolves when the operation is completed. But if watch mode is enabled,
+ * it will not resolve until it's aborted via `signal` (AbortSignal).
  */
 export const build = async (config: ConfigInput, signal?: AbortSignal): Promise<void> => {
 	const parsedConfig = parseConfig(config);
