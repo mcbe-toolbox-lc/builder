@@ -1,0 +1,15 @@
+{
+	"name": "@mcbe-toolbox-lc/builder",
+	"version": "0.0.0",
+	"license": "0BSD",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mcbe-toolbox-lc/builder.git"
+	},
+	"keywords": [
+		"minecraft",
+		"addon",
+		"build"
+	],
+	"type": "module"
+}
