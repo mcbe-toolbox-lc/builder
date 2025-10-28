@@ -34,7 +34,8 @@
 		"esbuild": "^0.25.11",
 		"fs-extra": "^11.3.2",
 		"json5": "^2.2.3",
-		"minimatch": "^10.0.3"
+		"minimatch": "^10.0.3",
+		"tmp-promise": "^3.0.3"
 	},
 	"devDependencies": {
 		"@types/archiver": "^7.0.0",
