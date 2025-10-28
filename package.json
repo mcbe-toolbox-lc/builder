@@ -37,6 +37,8 @@
 		"minimatch": "^10.0.3"
 	},
 	"devDependencies": {
+		"@types/archiver": "^7.0.0",
+		"@types/fs-extra": "^11.0.4",
 		"@types/node": "^22.18.12",
 		"prettier": "^3.6.2",
 		"shx": "^0.4.0",
