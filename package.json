@@ -11,5 +11,13 @@
 		"addon",
 		"build"
 	],
-	"type": "module"
+	"type": "module",
+	"devDependencies": {
+		"@types/node": "^22.18.12",
+		"prettier": "^3.6.2",
+		"shx": "^0.4.0",
+		"tsup": "^8.5.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.4"
+	}
 }
