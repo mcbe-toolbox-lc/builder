@@ -28,6 +28,14 @@
 		"format": "prettier --write .",
 		"prepack": "pnpm run build"
 	},
+	"dependencies": {
+		"archiver": "^7.0.1",
+		"chokidar": "^4.0.3",
+		"esbuild": "^0.25.11",
+		"fs-extra": "^11.3.2",
+		"json5": "^2.2.3",
+		"minimatch": "^10.0.3"
+	},
 	"devDependencies": {
 		"@types/node": "^22.18.12",
 		"prettier": "^3.6.2",
