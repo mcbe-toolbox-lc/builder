@@ -1,2 +1,2 @@
-export * from "@/build/build";
+export { build } from "@/build/build";
 export * from "@/config/config-input-types";
