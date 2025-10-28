@@ -3,7 +3,10 @@ import type { Config } from "@/config/config-parsed-types";
 import { parseConfig } from "@/config/parsing";
 import { styleText } from "node:util";
 
-const buildOperation = async (config: Config, signal?: AbortSignal): Promise<void> => {
+const startAndKeepBuildingIfNeeded = async (
+	config: Config,
+	signal?: AbortSignal,
+): Promise<void> => {
 	signal?.throwIfAborted();
 };
 
@@ -29,7 +32,7 @@ export const build = async (config: ConfigInput, signal?: AbortSignal): Promise<
 	}
 
 	try {
-		await buildOperation(parsedConfig, signal);
+		await startAndKeepBuildingIfNeeded(parsedConfig, signal);
 	} catch (error) {
 		console.error(styleText("red", `Build failed: ${error}`));
 	}
