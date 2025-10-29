@@ -24,7 +24,6 @@ export type BuildConfig = {
 
 export type BuildContext = {
 	config: BuildConfig;
-	signal?: AbortSignal;
 };
 
 const resolveTargetDir = (targetDir: string | string[]): string[] =>
@@ -67,9 +66,8 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 	return config;
 };
 
-export const createBuildContext = (config: BuildConfig, signal?: AbortSignal): BuildContext => {
+export const createBuildContext = (config: BuildConfig): BuildContext => {
 	return {
 		config,
-		signal,
 	};
 };
