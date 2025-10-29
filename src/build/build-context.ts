@@ -54,7 +54,9 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 			}
 		: undefined;
 
-	const customTempDirRoot = input.tempDir ? path.resolve(input.tempDir) : undefined;
+	const customTempDirRoot = input.customTempDirRoot
+		? path.resolve(input.customTempDirRoot)
+		: undefined;
 
 	const config: BuildConfig = {
 		bpConfig,
