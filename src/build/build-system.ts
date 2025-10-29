@@ -2,14 +2,18 @@ import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
 import tmp from "tmp-promise";
 
-/** A context that remains constant for each BuildSystem instance. */
+/**
+ * A context that remains constant for each BuildSystem instance.
+ */
 export type BuildSystemContext = {
 	config: BuildConfig;
 	id: string;
 	tempDir: tmp.DirectoryResult;
 };
 
-/** A context that is created every time a build is performed (including rebuilds). */
+/**
+ * A context is that is created for every build execution (including rebuild).
+ */
 export type BuildExecutionContext = {
 	buildSystemCtx: BuildSystemContext;
 	signal?: AbortSignal;
