@@ -2,9 +2,9 @@ type CommonPackConfigProps = {
 	/** Specifies the source directory of the pack. */
 	srcDir: string;
 	/**
-	 * Specifies the final output target directories.
-	 * Builder will first perform all work in a temporary directory and then copies the output to
-	 * the directory specified by this property.
+	 * Specifies the destination where the final output will be copied.
+	 *
+	 * Builder will first perform all work in a temporary directory and then copy the output.
 	 */
 	targetDir: string | string[];
 };
