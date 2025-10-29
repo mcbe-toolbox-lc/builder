@@ -6,19 +6,19 @@ type CommonPackConfigProps = {
 	targetDirs: string[];
 };
 
-export type BPBuilderConfig = CommonPackConfigProps & {
+export type BPConfig = CommonPackConfigProps & {
 	type: "behavior";
 };
 
-export type RPBuilderConfig = CommonPackConfigProps & {
+export type RPConfig = CommonPackConfigProps & {
 	type: "resource";
 };
 
-export type PackBuilderConfig = BPBuilderConfig | RPBuilderConfig;
+export type PackConfig = BPConfig | RPConfig;
 
 export type BuildConfig = {
-	bpConfig?: BPBuilderConfig;
-	rpConfig?: RPBuilderConfig;
+	bpConfig?: BPConfig;
+	rpConfig?: RPConfig;
 	customTempDirRoot?: string;
 };
 
@@ -37,7 +37,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 		throw new Error("Neither behavior pack nor resource pack is configured.");
 	}
 
-	const bpConfig: BPBuilderConfig | undefined = bpInput
+	const bpConfig: BPConfig | undefined = bpInput
 		? {
 				type: "behavior",
 				srcDir: path.resolve(bpInput.srcDir),
@@ -45,7 +45,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 			}
 		: undefined;
 
-	const rpConfig: RPBuilderConfig | undefined = rpInput
+	const rpConfig: RPConfig | undefined = rpInput
 		? {
 				type: "resource",
 				srcDir: path.resolve(rpInput.srcDir),
