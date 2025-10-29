@@ -22,10 +22,6 @@ export type BuildConfig = {
 	customTempDirRoot?: string;
 };
 
-export type BuildContext = {
-	config: BuildConfig;
-};
-
 const resolveTargetDir = (targetDir: string | string[]): string[] =>
 	(Array.isArray(targetDir) ? targetDir : [targetDir]).map((x) => path.resolve(x));
 
@@ -64,10 +60,4 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 	};
 
 	return config;
-};
-
-export const createBuildContext = (config: BuildConfig): BuildContext => {
-	return {
-		config,
-	};
 };
