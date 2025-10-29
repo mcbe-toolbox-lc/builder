@@ -42,6 +42,9 @@ importers:
       '@types/node':
         specifier: ^22.18.12
         version: 22.18.12
+      '@types/tmp':
+        specifier: ^0.2.6
+        version: 0.2.6
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -393,6 +396,9 @@ packages:
 
   '@types/readdir-glob@1.1.5':
     resolution: {integrity: sha512-raiuEPUYqXu+nvtY2Pe8s8FEmZ3x5yAH4VkLdihcPdalvsHltomrRC9BzuStrJ9yk06470hS0Crw0f1pXqD+Hg==}
+
+  '@types/tmp@0.2.6':
+    resolution: {integrity: sha512-chhaNf2oKHlRkDGt+tiKE2Z5aJ6qalm7Z9rlLdBwmOiAAf09YQvvoLXjWK4HWPF1xU/fqvMgfNfpVoBscA/tKA==}
 
   '@vitest/expect@4.0.4':
     resolution: {integrity: sha512-0ioMscWJtfpyH7+P82sGpAi3Si30OVV73jD+tEqXm5+rIx9LgnfdaOn45uaFkKOncABi/PHL00Yn0oW/wK4cXw==}
@@ -1463,6 +1469,8 @@ snapshots:
   '@types/readdir-glob@1.1.5':
     dependencies:
       '@types/node': 22.18.12
+
+  '@types/tmp@0.2.6': {}
 
   '@vitest/expect@4.0.4':
     dependencies:
