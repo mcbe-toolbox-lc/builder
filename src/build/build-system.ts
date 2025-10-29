@@ -30,6 +30,10 @@ export class BuildSystem {
 	}
 
 	static async createContext(config: BuildConfig): Promise<BuildSystemContext> {
+		if (!config.customTempDirRoot) {
+			tmp.setGracefulCleanup();
+		}
+
 		const id = crypto.randomUUID();
 		const tempDir = await tmp.dir({
 			name: `builder-${id}`,
