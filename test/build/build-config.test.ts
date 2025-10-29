@@ -1,4 +1,4 @@
-import { resolveAndValidateUserConfig } from "@/build/build-context";
+import { resolveAndValidateUserConfig } from "@/build/build-config";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
