@@ -44,8 +44,6 @@ export class BuildSystem {
 		const tempDir = await tmp.dir({
 			name: `builder-${id}`,
 			tmpdir: config.customTempDirRoot,
-			unsafeCleanup: true,
-			keep: true,
 		});
 
 		const ctx: BuildSystemContext = {
