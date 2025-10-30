@@ -9,6 +9,10 @@ type CommonPackConfigProps = {
 	 * Builder will first perform all work in a temporary directory and then copy the output.
 	 */
 	targetDir: string | string[];
+	/** An array of glob patterns or file paths to explicitly __include__ in the build. */
+	include?: string[];
+	/** An array of glob patterns or file paths to explicitly __exclude__ from the build. */
+	exclude?: string[];
 };
 
 export type BehaviorPackConfigInput = CommonPackConfigProps & {
