@@ -82,8 +82,9 @@ export class BuildSystem implements AsyncDisposable {
 
 		const id = crypto.randomUUID();
 		const tempDir = await tmp.dir({
-			name: `builder-${id}`,
+			name: `builder-temp-${id}`,
 			tmpdir: config.customTempDirRoot,
+			unsafeCleanup: true,
 		});
 
 		const ctx: BuildSystemContext = {
