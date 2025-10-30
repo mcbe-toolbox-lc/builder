@@ -26,6 +26,7 @@ export class BuildSystem implements AsyncDisposable {
 	private _rpBuilder?: PackBuilder;
 	private _currentController?: AbortController;
 	private _isClosed = false;
+	private _closeResolve?: () => void;
 
 	constructor(readonly ctx: BuildSystemContext) {
 		const { config } = ctx;
@@ -59,15 +60,40 @@ export class BuildSystem implements AsyncDisposable {
 	}
 
 	async close(): Promise<void> {
+		if (this._isClosed) return;
+
 		this._isClosed = true;
 		this._currentController?.abort();
+
+		if (this._closeResolve) {
+			this._closeResolve();
+			this._closeResolve = undefined;
+		}
+
 		await this.ctx.tempDir.cleanup();
 	}
 
-	start(): Promise<void> {
+	async start(): Promise<void> {
 		if (this._isClosed) throw new Error("Build system is closed.");
 
-		return this.build();
+		try {
+			await this.build();
+		} catch (error) {
+			try {
+				await this.close();
+			} catch (closeError) {
+				console.error("Failed to close BuildSystem after build failure.", closeError);
+			}
+
+			throw error;
+		}
+
+		const shouldWatch = false; // TODO
+
+		if (!shouldWatch) {
+			await this.close();
+			return;
+		}
 	}
 
 	private async build(): Promise<void> {
