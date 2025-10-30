@@ -1,0 +1,62 @@
+import type { ConfigInput } from "@/config/config-input-types";
+import { createLogger } from "@/utils/logger";
+import { BuildSystem, type BuildSystemContext } from "./build-system";
+import { resolveAndValidateUserConfig, type BuildConfig } from "./build-config";
+
+export const build = async (
+	configInput: ConfigInput,
+	options: { signal?: AbortSignal } = {},
+): Promise<void> => {
+	const { signal } = options;
+
+	const logger = createLogger({
+		prefix: "MAIN",
+		minLevel: configInput.logLevel,
+	});
+
+	if (signal?.aborted) {
+		logger.error("The provided signal is already aborted.");
+		return;
+	}
+
+	let buildConfig: BuildConfig;
+	try {
+		buildConfig = resolveAndValidateUserConfig(configInput);
+	} catch (error) {
+		logger.error(`Failed to validate the provided config: ${error}`);
+		return;
+	}
+
+	let ctx: BuildSystemContext;
+	try {
+		ctx = await BuildSystem.createContext(buildConfig);
+	} catch (error) {
+		logger.error(`Failed to create build system context: ${error}`);
+		return;
+	}
+
+	const buildSystem = new BuildSystem(ctx);
+
+	const onAbort = () => {
+		process.off("SIGINT", onAbort);
+		process.off("SIGTERM", onAbort);
+		signal?.removeEventListener("SIGINT", onAbort);
+
+		if (buildSystem.isClosed) return;
+
+		buildSystem.close();
+
+		logger.error(`Build aborted.`);
+	};
+
+	process.once("SIGINT", onAbort);
+	process.once("SIGTERM", onAbort);
+
+	signal?.addEventListener("abort", onAbort, { once: true });
+
+	try {
+		await buildSystem.run();
+	} catch (error) {
+		logger.error(`Build failed: ${error}`);
+	}
+};
