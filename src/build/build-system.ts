@@ -19,10 +19,11 @@ export type BuildExecutionContext = {
 	signal?: AbortSignal;
 };
 
-export class BuildSystem {
+export class BuildSystem implements AsyncDisposable {
 	private _bpBuilder?: PackBuilder;
 	private _rpBuilder?: PackBuilder;
 	private _currentController?: AbortController;
+	private _isClosed = false;
 
 	constructor(readonly ctx: BuildSystemContext) {
 		const { config } = ctx;
@@ -75,6 +76,22 @@ export class BuildSystem {
 	}
 
 	start(): Promise<void> {
+		if (this._isClosed) throw new Error("Build system is closed.");
+
 		return this.build();
+	}
+
+	async close(): Promise<void> {
+		this._isClosed = true;
+		this._currentController?.abort();
+		await this.ctx.tempDir.cleanup();
+	}
+
+	[Symbol.asyncDispose](): PromiseLike<void> {
+		return this.close();
+	}
+
+	get isClosed(): boolean {
+		return this._isClosed;
 	}
 }
