@@ -84,7 +84,7 @@ export class BuildSystem implements AsyncDisposable {
 			try {
 				await this.close();
 			} catch (closeError) {
-				console.error("Failed to close BuildSystem after build failure.", closeError);
+				this.ctx.logger.error(`Failed to close BuildSystem after build failure: ${closeError}`);
 			}
 
 			throw error;

@@ -57,6 +57,7 @@ export const build = async (
 	try {
 		await buildSystem.run();
 	} catch (error) {
-		logger.error(`Build failed: ${error}`);
+		logger.error(`Unexpected build system error: ${error}`);
+		throw error;
 	}
 };
