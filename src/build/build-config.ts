@@ -1,4 +1,5 @@
 import type { ConfigInput } from "@/config/config-input-types";
+import type { LogLevel } from "@/types/misc";
 import path from "node:path";
 
 type CommonPackConfigProps = {
@@ -20,6 +21,7 @@ export type BuildConfig = {
 	bpConfig?: BPConfig;
 	rpConfig?: RPConfig;
 	customTempDirRoot?: string;
+	logLevel?: LogLevel;
 };
 
 const resolveTargetDir = (targetDir: string | string[]): string[] =>
@@ -53,10 +55,13 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 		? path.resolve(input.customTempDirRoot)
 		: undefined;
 
+	const logLevel: LogLevel = input.logLevel ?? "info";
+
 	const config: BuildConfig = {
 		bpConfig,
 		rpConfig,
 		customTempDirRoot,
+		logLevel,
 	};
 
 	return config;
