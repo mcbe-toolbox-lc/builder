@@ -1,3 +1,5 @@
+import type { LogLevel } from "@/types/misc";
+
 type CommonPackConfigProps = {
 	/** Specifies the source directory of the pack. */
 	srcDir: string;
@@ -33,4 +35,10 @@ export type ConfigInput = {
 	 * By default, builder will use the system's temporary directory prefix.
 	 */
 	customTempDirRoot?: string;
+	/**
+	 * Sets the logging verbosity level.
+	 * To completely silent the logs, set this to `silent`.
+	 * @default "info"
+	 */
+	logLevel?: LogLevel;
 };
