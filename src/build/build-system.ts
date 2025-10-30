@@ -34,6 +34,7 @@ export class BuildSystem implements AsyncDisposable {
 		if (config.bpConfig) {
 			this._bpBuilder = new PackBuilder(
 				config.bpConfig,
+				"BP",
 				createLogger({
 					prefix: "BP",
 					minLevel: ctx.logger.minLevel,
@@ -43,6 +44,7 @@ export class BuildSystem implements AsyncDisposable {
 		if (config.rpConfig) {
 			this._rpBuilder = new PackBuilder(
 				config.rpConfig,
+				"RP",
 				createLogger({
 					prefix: "RP",
 					minLevel: ctx.logger.minLevel,
