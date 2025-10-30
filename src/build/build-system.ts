@@ -15,7 +15,7 @@ export type BuildSystemContext = {
  * A context is that is created for every build execution (including rebuild).
  */
 export type BuildExecutionContext = {
-	buildSystemCtx: BuildSystemContext;
+	parentCtx: BuildSystemContext;
 	signal?: AbortSignal;
 };
 
@@ -61,7 +61,7 @@ export class BuildSystem implements AsyncDisposable {
 		const { signal } = this._currentController;
 
 		const execCtx: BuildExecutionContext = {
-			buildSystemCtx: this.ctx,
+			parentCtx: this.ctx,
 			signal,
 		};
 
