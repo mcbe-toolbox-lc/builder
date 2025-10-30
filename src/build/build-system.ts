@@ -1,6 +1,7 @@
+import { createLogger, type Logger } from "@/utils/logger";
+import tmp from "tmp-promise";
 import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
-import tmp from "tmp-promise";
 
 /**
  * A context that remains constant for each BuildSystem instance.
@@ -9,6 +10,7 @@ export type BuildSystemContext = {
 	config: BuildConfig;
 	id: string;
 	tempDir: tmp.DirectoryResult;
+	logger: Logger;
 };
 
 /**
@@ -29,10 +31,22 @@ export class BuildSystem implements AsyncDisposable {
 		const { config } = ctx;
 
 		if (config.bpConfig) {
-			this._bpBuilder = new PackBuilder(config.bpConfig);
+			this._bpBuilder = new PackBuilder(
+				config.bpConfig,
+				createLogger({
+					prefix: "BP",
+					minLevel: ctx.logger.minLevel,
+				}),
+			);
 		}
 		if (config.rpConfig) {
-			this._rpBuilder = new PackBuilder(config.rpConfig);
+			this._rpBuilder = new PackBuilder(
+				config.rpConfig,
+				createLogger({
+					prefix: "RP",
+					minLevel: ctx.logger.minLevel,
+				}),
+			);
 		}
 	}
 
@@ -91,6 +105,10 @@ export class BuildSystem implements AsyncDisposable {
 			config,
 			id,
 			tempDir,
+			logger: createLogger({
+				prefix: "RUN",
+				minLevel: config.logLevel,
+			}),
 		};
 
 		return ctx;
