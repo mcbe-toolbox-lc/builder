@@ -73,7 +73,7 @@ export class BuildSystem implements AsyncDisposable {
 		await this.ctx.tempDir.cleanup();
 	}
 
-	async start(): Promise<void> {
+	async run(): Promise<void> {
 		if (this._isClosed) throw new Error("Build system is closed.");
 
 		try {
