@@ -5,6 +5,8 @@ import path from "node:path";
 type CommonPackConfigProps = {
 	srcDir: string;
 	targetDirs: string[];
+	include?: string[];
+	exclude?: string[];
 };
 
 export type BPConfig = CommonPackConfigProps & {
@@ -40,6 +42,8 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				type: "behavior",
 				srcDir: path.resolve(bpInput.srcDir),
 				targetDirs: resolveTargetDir(bpInput.targetDir),
+				include: bpInput.include,
+				exclude: bpInput.exclude,
 			}
 		: undefined;
 
@@ -48,6 +52,8 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				type: "resource",
 				srcDir: path.resolve(rpInput.srcDir),
 				targetDirs: resolveTargetDir(rpInput.targetDir),
+				include: rpInput.include,
+				exclude: rpInput.exclude,
 			}
 		: undefined;
 
