@@ -36,24 +36,24 @@ export class BuildSystem implements AsyncDisposable {
 		}
 	}
 
-	static async createContext(config: BuildConfig): Promise<BuildSystemContext> {
-		if (!config.customTempDirRoot) {
-			tmp.setGracefulCleanup();
-		}
+	get isClosed(): boolean {
+		return this._isClosed;
+	}
 
-		const id = crypto.randomUUID();
-		const tempDir = await tmp.dir({
-			name: `builder-${id}`,
-			tmpdir: config.customTempDirRoot,
-		});
+	[Symbol.asyncDispose](): PromiseLike<void> {
+		return this.close();
+	}
 
-		const ctx: BuildSystemContext = {
-			config,
-			id,
-			tempDir,
-		};
+	async close(): Promise<void> {
+		this._isClosed = true;
+		this._currentController?.abort();
+		await this.ctx.tempDir.cleanup();
+	}
 
-		return ctx;
+	start(): Promise<void> {
+		if (this._isClosed) throw new Error("Build system is closed.");
+
+		return this.build();
 	}
 
 	private async build(): Promise<void> {
@@ -75,23 +75,23 @@ export class BuildSystem implements AsyncDisposable {
 		}
 	}
 
-	start(): Promise<void> {
-		if (this._isClosed) throw new Error("Build system is closed.");
+	static async createContext(config: BuildConfig): Promise<BuildSystemContext> {
+		if (!config.customTempDirRoot) {
+			tmp.setGracefulCleanup();
+		}
 
-		return this.build();
-	}
+		const id = crypto.randomUUID();
+		const tempDir = await tmp.dir({
+			name: `builder-${id}`,
+			tmpdir: config.customTempDirRoot,
+		});
 
-	async close(): Promise<void> {
-		this._isClosed = true;
-		this._currentController?.abort();
-		await this.ctx.tempDir.cleanup();
-	}
+		const ctx: BuildSystemContext = {
+			config,
+			id,
+			tempDir,
+		};
 
-	[Symbol.asyncDispose](): PromiseLike<void> {
-		return this.close();
-	}
-
-	get isClosed(): boolean {
-		return this._isClosed;
+		return ctx;
 	}
 }
