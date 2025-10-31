@@ -59,7 +59,7 @@ export class PackBuilder {
 		const { changes, newCache } = await this.detectSourceTreeChanges(ctx);
 
 		if (changes.length <= 0) {
-			this.logger.warn("No changes were detected.");
+			this.logger.warn("No changes detected. (Possible cause: srcDir is empty)");
 			return {};
 		}
 
@@ -75,9 +75,9 @@ export class PackBuilder {
 
 		// TODO: Script bundling, texture list generation, etc.
 
-		if (this.config.targetDirs.length > 0) {
-			this.logger.debug("Copying the output to target directories...");
-
+		const targetDirs = this.config.targetDirs;
+		if (targetDirs.length > 0) {
+			this.logger.info(`Copying the output to ${targetDirs.length} target directory(s)...`);
 			await this.copyOutputToTargetDirs(ctx);
 		}
 
