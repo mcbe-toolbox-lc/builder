@@ -103,7 +103,7 @@ export class BuildSystem implements AsyncDisposable {
 		}
 	}
 
-	private async build(limitCheckPaths?: Set<string>): Promise<void> {
+	private async build(limitCheckPaths?: Set<string>): Promise<{ isAborted?: boolean }> {
 		this._currentController = new AbortController();
 		const { signal } = this._currentController;
 
@@ -124,7 +124,19 @@ export class BuildSystem implements AsyncDisposable {
 			const endTime = performance.now();
 			const totalTimeStr = `${(endTime - startTime).toFixed(2)}ms`;
 
-			this.ctx.logger.success(`All tasks completed in ${totalTimeStr}.`);
+			const isAborted =
+				(bpResult.status === "rejected" && bpResult.reason.name === "AbortError") ||
+				(rpResult.status === "rejected" && rpResult.reason.name === "AbortError");
+
+			if (isAborted) {
+				this.ctx.logger.warn(`One or more pack builders have been aborted.`);
+			} else {
+				this.ctx.logger.success(`All tasks completed in ${totalTimeStr}.`);
+			}
+
+			return {
+				isAborted,
+			};
 		} finally {
 			this._currentController = undefined;
 		}
