@@ -1,4 +1,5 @@
 import { createLogger, type Logger } from "@/utils/logger";
+import * as chokidar from "chokidar";
 import tmp from "tmp-promise";
 import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
@@ -96,6 +97,8 @@ export class BuildSystem implements AsyncDisposable {
 			await this.close();
 			return;
 		}
+
+		await this.watch();
 	}
 
 	private async build(): Promise<void> {
@@ -115,6 +118,32 @@ export class BuildSystem implements AsyncDisposable {
 		} finally {
 			this._currentController = undefined;
 		}
+	}
+
+	private async rebuild(): Promise<void> {
+		if (this._currentController) {
+			this.ctx.logger.warn("Aborting current build execution...");
+			this._currentController.abort();
+
+			// Wait for this._currentController to be undefined
+			await new Promise<void>((resolve) => {
+				const timeout = setInterval(() => {
+					if (this._currentController) return; // Still not finished
+					clearInterval(timeout);
+					resolve();
+				}, 69);
+			});
+		}
+
+		await this.build();
+	}
+
+	private watch(): Promise<void> {
+		// TODO: Watch for file changes and rebuild
+
+		return new Promise<void>((resolve) => {
+			this._closeResolve = resolve; // Never resolve until the BuildSystem instance is closed
+		});
 	}
 
 	static async createContext(config: BuildConfig): Promise<BuildSystemContext> {
