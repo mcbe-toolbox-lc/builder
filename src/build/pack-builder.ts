@@ -180,7 +180,7 @@ export class PackBuilder {
 	}
 
 	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
-		const outDir = path.join(ctx.parentCtx.tempDir.path, "bp");
+		const outDir = path.join(ctx.parentCtx.tempDir.path, this.name);
 		const promises = this.config.targetDirs.map(async (targetDir) => {
 			await fs.rm(targetDir, { recursive: true, force: true });
 			await fs.ensureDir(path.dirname(targetDir));
@@ -192,7 +192,7 @@ export class PackBuilder {
 
 	private getDestPath(ctx: BuildExecutionContext, srcPath: string, destFileExt?: string): string {
 		const srcDir = this.config.srcDir;
-		const outDir = path.join(ctx.parentCtx.tempDir.path, "bp");
+		const outDir = path.join(ctx.parentCtx.tempDir.path, this.name);
 		const parsedSrcPath = path.parse(srcPath);
 
 		if (destFileExt !== undefined) {
