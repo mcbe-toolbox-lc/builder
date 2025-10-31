@@ -1,5 +1,7 @@
 import { createLogger, type Logger } from "@/utils/logger";
 import * as chokidar from "chokidar";
+import path from "node:path";
+import pDebounce from "p-debounce";
 import tmp from "tmp-promise";
 import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
@@ -159,7 +161,7 @@ export class BuildSystem implements AsyncDisposable {
 		const watcher = chokidar.watch(pathsToWatch, {
 			persistent: true,
 			awaitWriteFinish: {
-				stabilityThreshold: 400,
+				stabilityThreshold: 300,
 				pollInterval: 100,
 			},
 			atomic: 100,
@@ -172,9 +174,30 @@ export class BuildSystem implements AsyncDisposable {
 			},
 		});
 
-		const changedFiles: string[] = [];
+		const changedFiles = new Set<string>();
+
+		const debounceController = new AbortController();
+
+		const rebuildDebounced = pDebounce(
+			() => {
+				this.rebuild();
+			},
+			300,
+			{
+				signal: debounceController.signal,
+			},
+		);
+
+		const onFileChange = (filePath: string): void => {
+			changedFiles.add(path.resolve(filePath));
+			rebuildDebounced();
+		};
 
 		watcher.on("ready", () => this.ctx.logger.info("Watching for file changes..."));
+		watcher.on("error", (error) => this.ctx.logger.error(`Watcher error: ${error}`));
+		watcher.on("add", onFileChange);
+		watcher.on("change", onFileChange);
+		watcher.on("unlink", onFileChange);
 
 		return new Promise<void>((resolve) => {
 			// Never resolve until the BuildSystem instance is closed
@@ -182,6 +205,7 @@ export class BuildSystem implements AsyncDisposable {
 				try {
 					this.ctx.logger.info("Closing watcher...");
 					await watcher.close();
+					debounceController.abort();
 				} finally {
 					resolve();
 				}
