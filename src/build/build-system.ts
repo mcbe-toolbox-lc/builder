@@ -166,7 +166,10 @@ export class BuildSystem implements AsyncDisposable {
 
 		const result = await this.build(limitCheckPaths);
 
-		if (!result.isAborted) limitCheckPaths.clear(); // Reset path check limits if build was not aborted
+		if (!result.isAborted) {
+			limitCheckPaths.clear(); // Reset path check limits if build was not aborted
+			this.ctx.logger.info("Watching for file changes...");
+		}
 	}
 
 	private watch(): Promise<void> {
