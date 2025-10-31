@@ -24,6 +24,7 @@ export type BuildConfig = {
 	rpConfig?: RPConfig;
 	customTempDirRoot?: string;
 	logLevel?: LogLevel;
+	watch?: boolean;
 };
 
 const resolveTargetDir = (targetDir: string | string[]): string[] =>
@@ -68,6 +69,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 		rpConfig,
 		customTempDirRoot,
 		logLevel,
+		watch: input.watch,
 	};
 
 	return config;
