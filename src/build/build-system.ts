@@ -181,6 +181,7 @@ export class BuildSystem implements AsyncDisposable {
 				pollInterval: 100,
 			},
 			atomic: 100,
+			ignoreInitial: true,
 			ignored: (file) => {
 				if (this._bpBuilder && this._bpBuilder.isFilePartOfSrc(file))
 					return !this._bpBuilder.shouldInclude(file);
