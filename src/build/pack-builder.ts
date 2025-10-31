@@ -203,8 +203,12 @@ export class PackBuilder {
 		return path.join(outDir, relativePath);
 	}
 
-	private shouldInclude(srcPath: string): boolean {
+	shouldInclude(srcPath: string): boolean {
 		const { srcDir, exclude, include } = this.config;
 		return testInclusion(srcPath, srcDir, include, exclude);
+	}
+
+	isFilePartOfSrc(filePath: string): boolean {
+		return path.resolve(filePath).startsWith(this.config.srcDir);
 	}
 }
