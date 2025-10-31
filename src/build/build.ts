@@ -55,9 +55,11 @@ export const build = async (
 
 		if (buildSystem.isClosed) return;
 
-		buildSystem.close();
+		logger.warn("Aborting...");
 
-		logger.error(`Build aborted.`);
+		buildSystem.close().then(() => {
+			logger.warn(`Build system closed.`);
+		});
 	};
 
 	process.once("SIGINT", onAbort);
