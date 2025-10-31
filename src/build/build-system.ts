@@ -147,7 +147,7 @@ export class BuildSystem implements AsyncDisposable {
 		}
 	}
 
-	private async rebuild(): Promise<void> {
+	private async rebuild(limitCheckPaths: Set<string>): Promise<void> {
 		if (this._currentController) {
 			this.ctx.logger.warn("Aborting current build execution...");
 			this._currentController.abort();
@@ -164,7 +164,9 @@ export class BuildSystem implements AsyncDisposable {
 
 		this.ctx.logger.info("Rebuilding...");
 
-		await this.build();
+		const result = await this.build(limitCheckPaths);
+
+		if (!result.isAborted) limitCheckPaths.clear(); // Reset path check limits if build was not aborted
 	}
 
 	private watch(): Promise<void> {
@@ -194,7 +196,7 @@ export class BuildSystem implements AsyncDisposable {
 
 		const rebuildDebounced = pDebounce(
 			() => {
-				this.rebuild();
+				this.rebuild(changedFiles);
 			},
 			300,
 			{
