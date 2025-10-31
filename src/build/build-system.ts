@@ -14,7 +14,7 @@ export type BuildSystemContext = {
 };
 
 /**
- * A context is that is created for every build execution (including rebuild).
+ * A context that's created for every build execution (including rebuild).
  */
 export type BuildExecutionContext = {
 	parentCtx: BuildSystemContext;
