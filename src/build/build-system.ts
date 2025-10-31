@@ -152,10 +152,40 @@ export class BuildSystem implements AsyncDisposable {
 	}
 
 	private watch(): Promise<void> {
-		// TODO: Watch for file changes and rebuild
+		const pathsToWatch: string[] = [];
+		if (this._bpBuilder) pathsToWatch.push(this._bpBuilder.config.srcDir);
+		if (this._rpBuilder) pathsToWatch.push(this._rpBuilder.config.srcDir);
+
+		const watcher = chokidar.watch(pathsToWatch, {
+			persistent: true,
+			awaitWriteFinish: {
+				stabilityThreshold: 400,
+				pollInterval: 100,
+			},
+			atomic: 100,
+			ignored: (file) => {
+				if (this._bpBuilder && this._bpBuilder.isFilePartOfSrc(file))
+					return !this._bpBuilder.shouldInclude(file);
+				if (this._rpBuilder && this._rpBuilder.isFilePartOfSrc(file))
+					return !this._rpBuilder.shouldInclude(file);
+				return true;
+			},
+		});
+
+		const changedFiles: string[] = [];
+
+		watcher.on("ready", () => this.ctx.logger.info("Watching for file changes..."));
 
 		return new Promise<void>((resolve) => {
-			this._closeResolve = resolve; // Never resolve until the BuildSystem instance is closed
+			// Never resolve until the BuildSystem instance is closed
+			this._closeResolve = async () => {
+				try {
+					this.ctx.logger.info("Closing watcher...");
+					await watcher.close();
+				} finally {
+					resolve();
+				}
+			};
 		});
 	}
 
