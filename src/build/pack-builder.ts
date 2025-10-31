@@ -39,11 +39,11 @@ export class PackBuilder {
 			}
 		} catch (error) {
 			if (error instanceof Error && error.name === "AbortError") {
-				this.logger.warn("Build aborted.");
+				this.logger.warn("Pack build aborted.");
 			} else {
-				this.logger.error(`Build failed: ${error}`);
-				throw error;
+				this.logger.error(`Pack build failed: ${error}`);
 			}
+			throw error;
 		}
 	}
 
@@ -121,7 +121,9 @@ export class PackBuilder {
 				const entries = await fs.readdir(dir);
 				const promises = entries.map(async (entry) => {
 					const fullPath = path.join(dir, entry);
+
 					if (!this.shouldInclude(fullPath)) return;
+					if (ctx.limitCheckPaths && !ctx.limitCheckPaths.has(fullPath)) return;
 
 					const stats = await fs.stat(fullPath);
 					if (stats.isDirectory()) {
