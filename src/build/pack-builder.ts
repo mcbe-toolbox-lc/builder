@@ -123,12 +123,13 @@ export class PackBuilder {
 					const fullPath = path.join(dir, entry);
 
 					if (!this.shouldInclude(fullPath)) return;
-					if (ctx.limitCheckPaths && !ctx.limitCheckPaths.has(fullPath)) return;
+
+					const shouldCheck = !ctx.limitCheckPaths || ctx.limitCheckPaths.has(fullPath);
 
 					const stats = await fs.stat(fullPath);
 					if (stats.isDirectory()) {
 						dirSearchQueue.push(fullPath);
-					} else if (stats.isFile()) {
+					} else if (stats.isFile() && shouldCheck) {
 						await checkFileChanges(fullPath);
 					}
 				});
@@ -139,6 +140,7 @@ export class PackBuilder {
 		}
 
 		for (const filePath in this._lastCache) {
+			if (ctx.limitCheckPaths && !ctx.limitCheckPaths.has(filePath)) break;
 			if (!currentFiles.has(filePath)) {
 				changes.push({ type: "remove", filePath });
 			}
