@@ -1,4 +1,7 @@
 import { createLogger, type Logger } from "@/utils/logger";
+import * as chokidar from "chokidar";
+import path from "node:path";
+import pDebounce from "p-debounce";
 import tmp from "tmp-promise";
 import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
@@ -95,12 +98,14 @@ export class BuildSystem implements AsyncDisposable {
 			throw error;
 		}
 
-		const shouldWatch = false; // TODO
+		const shouldWatch = this.ctx.config.watch;
 
 		if (!shouldWatch) {
 			await this.close();
 			return;
 		}
+
+		await this.watch();
 	}
 
 	private async build(limitCheckPaths?: Set<string>): Promise<{ isAborted?: boolean }> {
@@ -140,6 +145,92 @@ export class BuildSystem implements AsyncDisposable {
 		} finally {
 			this._currentController = undefined;
 		}
+	}
+
+	private async rebuild(limitCheckPaths: Set<string>): Promise<void> {
+		if (this._currentController) {
+			this.ctx.logger.warn("Aborting current build execution...");
+			this._currentController.abort();
+
+			// Wait for this._currentController to be undefined
+			await new Promise<void>((resolve) => {
+				const timeout = setInterval(() => {
+					if (this._currentController) return; // Still not finished
+					clearInterval(timeout);
+					resolve();
+				}, 69);
+			});
+		}
+
+		this.ctx.logger.info("Rebuilding...");
+
+		const result = await this.build(limitCheckPaths);
+
+		if (!result.isAborted) {
+			limitCheckPaths.clear(); // Reset path check limits if build was not aborted
+			this.ctx.logger.info("Watching for file changes...");
+		}
+	}
+
+	private watch(): Promise<void> {
+		const pathsToWatch: string[] = [];
+		if (this._bpBuilder) pathsToWatch.push(this._bpBuilder.config.srcDir);
+		if (this._rpBuilder) pathsToWatch.push(this._rpBuilder.config.srcDir);
+
+		const watcher = chokidar.watch(pathsToWatch, {
+			persistent: true,
+			awaitWriteFinish: {
+				stabilityThreshold: 300,
+				pollInterval: 100,
+			},
+			atomic: 100,
+			ignoreInitial: true,
+			ignored: (file) => {
+				if (this._bpBuilder && this._bpBuilder.isFilePartOfSrc(file))
+					return !this._bpBuilder.shouldInclude(file);
+				if (this._rpBuilder && this._rpBuilder.isFilePartOfSrc(file))
+					return !this._rpBuilder.shouldInclude(file);
+				return true;
+			},
+		});
+
+		const changedFiles = new Set<string>();
+
+		const debounceController = new AbortController();
+
+		const rebuildDebounced = pDebounce(
+			() => {
+				this.rebuild(changedFiles);
+			},
+			300,
+			{
+				signal: debounceController.signal,
+			},
+		);
+
+		const onFileChange = (filePath: string): void => {
+			changedFiles.add(path.resolve(filePath));
+			rebuildDebounced();
+		};
+
+		watcher.on("ready", () => this.ctx.logger.info("Watching for file changes..."));
+		watcher.on("error", (error) => this.ctx.logger.error(`Watcher error: ${error}`));
+		watcher.on("add", onFileChange);
+		watcher.on("change", onFileChange);
+		watcher.on("unlink", onFileChange);
+
+		return new Promise<void>((resolve) => {
+			// Never resolve until the BuildSystem instance is closed
+			this._closeResolve = async () => {
+				try {
+					this.ctx.logger.info("Closing watcher...");
+					await watcher.close();
+					debounceController.abort();
+				} finally {
+					resolve();
+				}
+			};
+		});
 	}
 
 	static async createContext(config: BuildConfig): Promise<BuildSystemContext> {
