@@ -18,6 +18,7 @@ export type BuildSystemContext = {
  */
 export type BuildExecutionContext = {
 	parentCtx: BuildSystemContext;
+	limitCheckPaths?: Set<string>;
 	signal?: AbortSignal;
 };
 
@@ -102,12 +103,13 @@ export class BuildSystem implements AsyncDisposable {
 		}
 	}
 
-	private async build(): Promise<void> {
+	private async build(limitCheckPaths?: Set<string>): Promise<void> {
 		this._currentController = new AbortController();
 		const { signal } = this._currentController;
 
 		const execCtx: BuildExecutionContext = {
 			parentCtx: this.ctx,
+			limitCheckPaths,
 			signal,
 		};
 

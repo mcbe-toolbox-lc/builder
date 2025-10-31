@@ -121,7 +121,9 @@ export class PackBuilder {
 				const entries = await fs.readdir(dir);
 				const promises = entries.map(async (entry) => {
 					const fullPath = path.join(dir, entry);
+
 					if (!this.shouldInclude(fullPath)) return;
+					if (ctx.limitCheckPaths && !ctx.limitCheckPaths.has(fullPath)) return;
 
 					const stats = await fs.stat(fullPath);
 					if (stats.isDirectory()) {
