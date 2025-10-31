@@ -45,4 +45,10 @@ export type ConfigInput = {
 	 * @default "info"
 	 */
 	logLevel?: LogLevel;
+	/**
+	 * When this is enabled and the initial build step completes, builder will "watch" for file
+	 * changes in the background. If it detects a file change, it will trigger rebuild.
+	 * @default false
+	 */
+	watch?: boolean;
 };
