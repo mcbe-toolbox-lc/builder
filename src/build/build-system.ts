@@ -95,7 +95,7 @@ export class BuildSystem implements AsyncDisposable {
 			throw error;
 		}
 
-		const shouldWatch = false; // TODO
+		const shouldWatch = this.ctx.config.watch;
 
 		if (!shouldWatch) {
 			await this.close();
@@ -145,6 +145,8 @@ export class BuildSystem implements AsyncDisposable {
 				}, 69);
 			});
 		}
+
+		this.ctx.logger.info("Rebuilding...");
 
 		await this.build();
 	}
