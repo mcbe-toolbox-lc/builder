@@ -1,6 +1,7 @@
 import { testInclusion } from "@/utils/inclusion";
 import type { Logger } from "@/utils/logger";
 import fs from "fs-extra";
+import JSON5 from "json5";
 import path from "node:path";
 import type { PackConfig } from "./build-config";
 import type { BuildExecutionContext } from "./build-system";
@@ -31,7 +32,7 @@ export class PackBuilder {
 
 			const { newCache } = await this.executeBuild(ctx);
 
-			this.logger.info(`Build finished!`);
+			this.logger.success(`Build finished successfully!`);
 
 			if (newCache) {
 				this._lastCache = newCache;
@@ -53,11 +54,31 @@ export class PackBuilder {
 			throw new Error(`Source directory not found at ${this.config.srcDir}`);
 		}
 
+		this.logger.debug("Detecting source tree changes...");
+
 		const { changes, newCache } = await this.detectSourceTreeChanges(ctx);
 
 		if (changes.length <= 0) {
 			this.logger.warn("No changes were detected.");
 			return {};
+		}
+
+		const fileProcessingPromises: Promise<void>[] = [];
+
+		for (const change of changes) {
+			fileProcessingPromises.push(this.applyFileChange(ctx, change));
+		}
+
+		this.logger.debug(`Applying ${fileProcessingPromises.length} file changes...`);
+
+		await Promise.all(fileProcessingPromises);
+
+		// TODO: Script bundling, texture list generation, etc.
+
+		if (this.config.targetDirs.length > 0) {
+			this.logger.debug("Copying the output to target directories...");
+
+			await this.copyOutputToTargetDirs(ctx);
 		}
 
 		return { newCache };
@@ -122,6 +143,64 @@ export class PackBuilder {
 		}
 
 		return { changes, newCache };
+	}
+
+	private async applyFileChange(ctx: BuildExecutionContext, change: FileChange): Promise<void> {
+		ctx.signal?.throwIfAborted();
+
+		const srcPath = change.filePath;
+		const extname = path.extname(srcPath);
+		const convertJson5 = extname === ".jsonc" || extname === ".json5";
+
+		const destFileExt = convertJson5 ? ".json" : undefined;
+		const destPath = this.getDestPath(ctx, change.filePath, destFileExt);
+		const destDir = path.dirname(destPath);
+
+		if (change.type === "remove") {
+			if (await fs.pathExists(destPath)) {
+				await fs.rm(destPath);
+				if ((await fs.readdir(destDir)).length === 0) {
+					await fs.rm(destDir, { recursive: true, force: true });
+				}
+			}
+			return;
+		}
+
+		// Convert JSON5/JSONC to plain JSON
+		if (convertJson5) {
+			const srcContent = await fs.readFile(srcPath);
+			const original = srcContent.toString("utf8");
+			const json = JSON.stringify(JSON5.parse(original), null, 2);
+			await fs.outputFile(destPath, json);
+			return;
+		}
+
+		await fs.ensureDir(destDir);
+		await fs.copy(srcPath, destPath);
+	}
+
+	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
+		const outDir = path.join(ctx.parentCtx.tempDir.path, "bp");
+		const promises = this.config.targetDirs.map(async (targetDir) => {
+			await fs.rm(targetDir, { recursive: true, force: true });
+			await fs.ensureDir(path.dirname(targetDir));
+			await fs.copy(outDir, targetDir);
+			this.logger.debug(`Copied to ${targetDir}`);
+		});
+		await Promise.all(promises);
+	}
+
+	private getDestPath(ctx: BuildExecutionContext, srcPath: string, destFileExt?: string): string {
+		const srcDir = this.config.srcDir;
+		const outDir = path.join(ctx.parentCtx.tempDir.path, "bp");
+		const parsedSrcPath = path.parse(srcPath);
+
+		if (destFileExt !== undefined) {
+			parsedSrcPath.base = `${parsedSrcPath.name}${destFileExt}`;
+		}
+
+		const relativePath = path.relative(srcDir, path.format(parsedSrcPath));
+		return path.join(outDir, relativePath);
 	}
 
 	private shouldInclude(srcPath: string): boolean {
