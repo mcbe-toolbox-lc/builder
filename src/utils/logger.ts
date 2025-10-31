@@ -50,11 +50,10 @@ export const createLogger = (config: LoggerConfig): Logger => {
 		const prefixColor = options?.prefixColorOverride ?? levelInfo.prefixColor;
 		const messageColor = options?.messageColorOverride ?? levelInfo.messageColor;
 
-		const prefixStr = styleText(prefixColor, `[${prefix.toUpperCase()}]`);
-		const levelStr = styleText(levelInfo.prefixColor, `[${level.toUpperCase()}]`);
+		const prefixStr = styleText(prefixColor, `${prefix.toUpperCase()}`);
 		const messageStr = styleText(messageColor, message);
 
-		const finalMessage = [prefixStr, levelStr, messageStr].filter(Boolean).join(" ");
+		const finalMessage = [prefixStr, messageStr].filter(Boolean).join(" ");
 
 		console[levelInfo.method](finalMessage);
 	};
