@@ -37,6 +37,7 @@ export const build = async (
 	if (buildConfig.rpConfig) packCount++;
 
 	logger.info(`Packs: ${packCount}`);
+	logger.info(`Watch: ${buildConfig.watch}`);
 
 	let ctx: BuildSystemContext;
 	try {
