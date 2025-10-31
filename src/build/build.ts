@@ -32,6 +32,12 @@ export const build = async (
 		return;
 	}
 
+	let packCount = 0;
+	if (buildConfig.bpConfig) packCount++;
+	if (buildConfig.rpConfig) packCount++;
+
+	logger.info(`Packs: ${packCount}`);
+
 	let ctx: BuildSystemContext;
 	try {
 		ctx = await BuildSystem.createContext(buildConfig);

@@ -78,13 +78,17 @@ export class BuildSystem implements AsyncDisposable {
 	async runAndClose(): Promise<void> {
 		if (this._isClosed) throw new Error("Build system is closed.");
 
+		this.ctx.logger.info(`Starting initial build...`);
+
 		try {
 			await this.build();
 		} catch (error) {
+			this.ctx.logger.error(`Build failed. Closing build system...`);
+
 			try {
 				await this.close();
 			} catch (closeError) {
-				this.ctx.logger.error(`Failed to close BuildSystem after build failure: ${closeError}`);
+				this.ctx.logger.error(`Failed to close build system after build failure: ${closeError}`);
 			}
 
 			throw error;
@@ -108,10 +112,17 @@ export class BuildSystem implements AsyncDisposable {
 		};
 
 		try {
+			const startTime = performance.now();
+
 			const bpPromise = this._bpBuilder ? this._bpBuilder?.build(execCtx) : null;
 			const rpPromise = this._rpBuilder ? this._rpBuilder?.build(execCtx) : null;
 
 			const [bpResult, rpResult] = await Promise.allSettled([bpPromise, rpPromise]);
+
+			const endTime = performance.now();
+			const totalTimeStr = `${(endTime - startTime).toFixed(2)}ms`;
+
+			this.ctx.logger.success(`All tasks completed in ${totalTimeStr}.`);
 		} finally {
 			this._currentController = undefined;
 		}
