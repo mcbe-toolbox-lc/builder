@@ -3,6 +3,11 @@ import { createLogger } from "@/utils/logger";
 import { BuildSystem, type BuildSystemContext } from "./build-system";
 import { resolveAndValidateUserConfig, type BuildConfig } from "./build-config";
 
+/**
+ * Asynchronously builds the project based on the configuration.
+ * @param configInput - Build configuration object.
+ * @param options - Optional settings for the build operation.
+ */
 export const build = async (
 	configInput: ConfigInput,
 	options: { signal?: AbortSignal } = {},
