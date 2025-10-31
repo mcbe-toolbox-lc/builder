@@ -163,9 +163,7 @@ export class PackBuilder {
 		if (change.type === "remove") {
 			if (await fs.pathExists(destPath)) {
 				await fs.rm(destPath);
-				if ((await fs.readdir(destDir)).length === 0) {
-					await fs.rm(destDir, { recursive: true, force: true });
-				}
+				this.recursivelyRemoveDirIfEmpty(destDir);
 			}
 			return;
 		}
@@ -183,8 +181,18 @@ export class PackBuilder {
 		await fs.copy(srcPath, destPath);
 	}
 
+	private async recursivelyRemoveDirIfEmpty(dir: string): Promise<void> {
+		dir = path.resolve(dir);
+		if ((await fs.readdir(dir)).length > 0) return;
+		await fs.rmdir(dir);
+
+		const parent = path.dirname(dir);
+		this.recursivelyRemoveDirIfEmpty(parent);
+	}
+
 	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
 		const outDir = path.join(ctx.parentCtx.tempDir.path, this.name);
+		if (!(await fs.pathExists(outDir))) return;
 		const promises = this.config.targetDirs.map(async (targetDir) => {
 			await fs.rm(targetDir, { recursive: true, force: true });
 			await fs.ensureDir(path.dirname(targetDir));
