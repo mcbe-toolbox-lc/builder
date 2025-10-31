@@ -39,11 +39,11 @@ export class PackBuilder {
 			}
 		} catch (error) {
 			if (error instanceof Error && error.name === "AbortError") {
-				this.logger.warn("Build aborted.");
+				this.logger.warn("Pack build aborted.");
 			} else {
-				this.logger.error(`Build failed: ${error}`);
-				throw error;
+				this.logger.error(`Pack build failed: ${error}`);
 			}
+			throw error;
 		}
 	}
 
