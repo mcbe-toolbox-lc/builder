@@ -55,7 +55,7 @@ export const build = async (
 	signal?.addEventListener("abort", onAbort, { once: true });
 
 	try {
-		await buildSystem.run();
+		await buildSystem.runAndClose();
 	} catch (error) {
 		logger.error(`Unexpected build system error: ${error}`);
 		throw error;

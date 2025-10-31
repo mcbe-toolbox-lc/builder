@@ -59,7 +59,7 @@ describe("BuildSystem", () => {
 
 			const buildSystem = new BuildSystem(ctx);
 
-			await buildSystem.run();
+			await buildSystem.runAndClose();
 
 			expect(buildSystem.isClosed).toBe(true);
 			expect(await fs.readFile(path.join(bpTargetDir, "test file"), "utf8")).toBe("some text");
