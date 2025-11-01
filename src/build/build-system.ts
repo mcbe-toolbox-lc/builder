@@ -158,7 +158,7 @@ export class BuildSystem implements AsyncDisposable {
 					if (this._currentController) return; // Still not finished
 					clearInterval(timeout);
 					resolve();
-				}, 69);
+				}, 10);
 			});
 		}
 
@@ -202,7 +202,7 @@ export class BuildSystem implements AsyncDisposable {
 			() => {
 				this.rebuild(changedFiles);
 			},
-			300,
+			100,
 			{
 				signal: debounceController.signal,
 			},
