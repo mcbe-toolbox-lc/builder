@@ -1,4 +1,4 @@
-import type { ConfigInput } from "@/config/config-input-types";
+import type { ArchiveOptions, ConfigInput } from "@/config/config-input-types";
 import type { LogLevel } from "@/types/misc";
 import path from "node:path";
 
@@ -22,6 +22,7 @@ export type PackConfig = BPConfig | RPConfig;
 export type BuildConfig = {
 	bpConfig?: BPConfig;
 	rpConfig?: RPConfig;
+	archives: ArchiveOptions[];
 	customTempDirRoot?: string;
 	logLevel?: LogLevel;
 	watch?: boolean;
@@ -58,6 +59,17 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 			}
 		: undefined;
 
+	const archives: ArchiveOptions[] = (
+		Array.isArray(input.archive)
+			? input.archive
+			: input.archive !== undefined
+				? [input.archive]
+				: []
+	).map((x) => ({
+		outFile: path.resolve(x.outFile),
+		compressionLevel: Math.floor(x.compressionLevel ?? 9),
+	}));
+
 	const customTempDirRoot = input.customTempDirRoot
 		? path.resolve(input.customTempDirRoot)
 		: undefined;
@@ -67,6 +79,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 	const config: BuildConfig = {
 		bpConfig,
 		rpConfig,
+		archives,
 		customTempDirRoot,
 		logLevel,
 		watch: input.watch,
