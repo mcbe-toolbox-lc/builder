@@ -1,7 +1,9 @@
 import type { ConfigInput } from "@/config/config-input-types";
 import { createLogger } from "@/utils/logger";
-import { BuildSystem, type BuildSystemContext } from "./build-system";
+import JSON5 from "json5";
+import packageConfig from "../../package.json";
 import { resolveAndValidateUserConfig, type BuildConfig } from "./build-config";
+import { BuildSystem, type BuildSystemContext } from "./build-system";
 
 /**
  * Asynchronously builds the project based on the configuration.
@@ -15,9 +17,11 @@ export const build = async (
 	const { signal } = options;
 
 	const logger = createLogger({
-		prefix: "MAIN",
+		prefix: "COR",
 		minLevel: configInput.logLevel,
 	});
+
+	logger.info(`Builder version: ${packageConfig.version}`);
 
 	if (signal?.aborted) {
 		logger.error("The provided signal is already aborted.");
@@ -32,12 +36,7 @@ export const build = async (
 		return;
 	}
 
-	let packCount = 0;
-	if (buildConfig.bpConfig) packCount++;
-	if (buildConfig.rpConfig) packCount++;
-
-	logger.info(`Packs: ${packCount}`);
-	logger.info(`Watch: ${buildConfig.watch}`);
+	logger.debug(`Parsed config:\n${JSON5.stringify(buildConfig, null, 2)}`);
 
 	let ctx: BuildSystemContext;
 	try {
@@ -49,24 +48,29 @@ export const build = async (
 
 	const buildSystem = new BuildSystem(ctx);
 
-	const onAbort = () => {
-		process.off("SIGINT", onAbort);
-		process.off("SIGTERM", onAbort);
-		signal?.removeEventListener("SIGINT", onAbort);
+	logger.info("Initialized build system.");
 
-		if (buildSystem.isClosed) return;
+	const onAbort = (reason: string) => {
+		const callback = () => {
+			process.off("SIGINT", onAbort);
+			process.off("SIGTERM", onAbort);
+			signal?.removeEventListener("SIGINT", callback);
 
-		logger.warn("Aborting...");
+			if (buildSystem.isClosed) return;
 
-		buildSystem.close().then(() => {
-			logger.warn(`Build system closed.`);
-		});
+			logger.warn(`Aborting... (Reason: ${reason})`);
+
+			buildSystem.close().then(() => {
+				logger.info("Build system has been closed.");
+			});
+		};
+		return callback;
 	};
 
-	process.once("SIGINT", onAbort);
-	process.once("SIGTERM", onAbort);
+	process.once("SIGINT", onAbort("Keyboard Interrupt"));
+	process.once("SIGTERM", onAbort("SIGTERM"));
 
-	signal?.addEventListener("abort", onAbort, { once: true });
+	signal?.addEventListener("abort", onAbort("AbortSignal"), { once: true });
 
 	try {
 		await buildSystem.runAndClose();
@@ -74,4 +78,18 @@ export const build = async (
 		logger.error(`Unexpected build system error: ${error}`);
 		throw error;
 	}
+
+	await new Promise<void>((resolve) => setTimeout(resolve, 5));
+
+	const endSentences: string[] = [
+		"*Builder has left the chat*",
+		"*Builder has quit the game*",
+		"*Builder has refused to elaborate further*",
+		"*Builder has finished the job*",
+		"*Builder said see you soon*",
+	];
+
+	const randomIndex: number = Math.floor(Math.random() * endSentences.length);
+
+	logger.success(endSentences[randomIndex]!);
 };

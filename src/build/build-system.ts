@@ -69,12 +69,18 @@ export class BuildSystem implements AsyncDisposable {
 		if (this._isClosed) return;
 
 		this._isClosed = true;
-		this._currentController?.abort();
+
+		if (this._currentController) {
+			this.ctx.logger.debug("Aborting current build operation...");
+			this._currentController?.abort();
+		}
 
 		if (this._closeResolve) {
 			this._closeResolve();
 			this._closeResolve = undefined;
 		}
+
+		this.ctx.logger.debug(`Cleaning up temporal directory: ${this.ctx.tempDir.path}`);
 
 		await this.ctx.tempDir.cleanup();
 	}
@@ -82,7 +88,13 @@ export class BuildSystem implements AsyncDisposable {
 	async runAndClose(): Promise<void> {
 		if (this._isClosed) throw new Error("Build system is closed.");
 
-		this.ctx.logger.info(`Starting initial build...`);
+		const shouldWatch = this.ctx.config.watch;
+
+		if (shouldWatch) {
+			this.ctx.logger.info(`Starting initial build...`);
+		} else {
+			this.ctx.logger.info(`Starting build...`);
+		}
 
 		try {
 			await this.build();
@@ -97,8 +109,6 @@ export class BuildSystem implements AsyncDisposable {
 
 			throw error;
 		}
-
-		const shouldWatch = this.ctx.config.watch;
 
 		if (!shouldWatch) {
 			await this.close();
@@ -136,7 +146,7 @@ export class BuildSystem implements AsyncDisposable {
 			if (isAborted) {
 				this.ctx.logger.warn(`One or more pack builders have been aborted.`);
 			} else {
-				this.ctx.logger.success(`All tasks completed in ${totalTimeStr}.`);
+				this.ctx.logger.success(`Build finished successfully in ${totalTimeStr}.`);
 			}
 
 			return {
@@ -149,7 +159,7 @@ export class BuildSystem implements AsyncDisposable {
 
 	private async rebuild(limitCheckPaths: Set<string>): Promise<void> {
 		if (this._currentController) {
-			this.ctx.logger.warn("Aborting current build execution...");
+			this.ctx.logger.warn("Aborting current (re)build execution...");
 			this._currentController.abort();
 
 			// Wait for this._currentController to be undefined
@@ -162,7 +172,7 @@ export class BuildSystem implements AsyncDisposable {
 			});
 		}
 
-		this.ctx.logger.info("Rebuilding...");
+		this.ctx.logger.info("Starting rebuild...");
 
 		const result = await this.build(new Set(limitCheckPaths));
 
@@ -209,6 +219,7 @@ export class BuildSystem implements AsyncDisposable {
 		);
 
 		const onFileChange = (filePath: string): void => {
+			this.ctx.logger.debug(`Detected file change: ${filePath}`);
 			changedFiles.add(path.resolve(filePath));
 			rebuildDebounced();
 		};
@@ -223,7 +234,7 @@ export class BuildSystem implements AsyncDisposable {
 			// Never resolve until the BuildSystem instance is closed
 			this._closeResolve = async () => {
 				try {
-					this.ctx.logger.info("Closing watcher...");
+					this.ctx.logger.debug("Closing watcher...");
 					await watcher.close();
 					debounceController.abort();
 				} finally {
@@ -250,7 +261,7 @@ export class BuildSystem implements AsyncDisposable {
 			id,
 			tempDir,
 			logger: createLogger({
-				prefix: "RUN",
+				prefix: "BLD",
 				minLevel: config.logLevel,
 			}),
 		};

@@ -28,11 +28,9 @@ export class PackBuilder {
 
 	async build(ctx: BuildExecutionContext): Promise<void> {
 		try {
-			this.logger.info("Building...");
-
 			const { newCache } = await this.executeBuild(ctx);
 
-			this.logger.success(`Build finished successfully!`);
+			this.logger.debug(`Pack build finished successfully.`);
 
 			if (newCache) {
 				this._lastCache = newCache;
@@ -54,12 +52,14 @@ export class PackBuilder {
 			throw new Error(`Source directory not found at ${this.config.srcDir}`);
 		}
 
+		await fs.ensureDir(path.join(ctx.parentCtx.tempDir.path, this.name));
+
 		this.logger.debug("Detecting source tree changes...");
 
 		const { changes, newCache } = await this.detectSourceTreeChanges(ctx);
 
 		if (changes.length <= 0) {
-			this.logger.warn("No changes detected. (Possible cause: srcDir is empty)");
+			this.logger.debug("No changes detected.");
 			return {};
 		}
 
@@ -77,7 +77,7 @@ export class PackBuilder {
 
 		const targetDirs = this.config.targetDirs;
 		if (targetDirs.length > 0) {
-			this.logger.info(`Copying the output to ${targetDirs.length} target directory(s)...`);
+			this.logger.debug(`Copying the output to ${targetDirs.length} target directory(s)...`);
 			await this.copyOutputToTargetDirs(ctx);
 		}
 
@@ -198,7 +198,7 @@ export class PackBuilder {
 		if (!(await fs.pathExists(outDir))) return;
 		const promises = this.config.targetDirs.map(async (targetDir) => {
 			await fs.rm(targetDir, { recursive: true, force: true });
-			await fs.ensureDir(path.dirname(targetDir));
+			await fs.ensureDir(targetDir);
 			await fs.copy(outDir, targetDir);
 			this.logger.debug(`Copied to ${targetDir}`);
 		});
