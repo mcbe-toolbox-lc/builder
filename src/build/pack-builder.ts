@@ -159,11 +159,12 @@ export class PackBuilder {
 		const destFileExt = convertJson5 ? ".json" : undefined;
 		const destPath = this.getDestPath(ctx, change.filePath, destFileExt);
 		const destDir = path.dirname(destPath);
+		const outDir = path.join(ctx.parentCtx.tempDir.path, this.name);
 
 		if (change.type === "remove") {
 			if (await fs.pathExists(destPath)) {
 				await fs.rm(destPath);
-				this.recursivelyRemoveDirIfEmpty(destDir);
+				this.recursivelyRemoveDirIfEmpty(destDir, outDir);
 			}
 			return;
 		}
@@ -181,13 +182,15 @@ export class PackBuilder {
 		await fs.copy(srcPath, destPath);
 	}
 
-	private async recursivelyRemoveDirIfEmpty(dir: string): Promise<void> {
+	private async recursivelyRemoveDirIfEmpty(dir: string, stopAt: string): Promise<void> {
 		dir = path.resolve(dir);
+		stopAt = path.resolve(stopAt);
+		if (dir === stopAt) return;
 		if ((await fs.readdir(dir)).length > 0) return;
 		await fs.rmdir(dir);
 
 		const parent = path.dirname(dir);
-		this.recursivelyRemoveDirIfEmpty(parent);
+		this.recursivelyRemoveDirIfEmpty(parent, stopAt);
 	}
 
 	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
