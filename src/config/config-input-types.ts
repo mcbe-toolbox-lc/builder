@@ -23,6 +23,16 @@ export type ResourcePackConfigInput = CommonPackConfigProps & {
 	// TODO: Resource pack-specific properties
 };
 
+export type ArchiveOptions = {
+	/** Specifies where the generated archive file will be saved. */
+	outFile: string;
+	/**
+	 * Specifies the archive compression level.
+	 * @default 9
+	 */
+	compressionLevel?: number;
+};
+
 export type ConfigInput = {
 	/**
 	 * Configures the behavior pack.
@@ -34,6 +44,12 @@ export type ConfigInput = {
 	 * Leave this undefined if you don't need resource pack.
 	 */
 	resourcePack?: ResourcePackConfigInput;
+	/**
+	 * Specifies how one or more archive files will be generated from the final output packs.
+	 *
+	 * You can use this to create distributable files with extensions like `.mcpack` and `.mcaddon`.
+	 */
+	archive?: ArchiveOptions | ArchiveOptions[];
 	/**
 	 * Specifies the directory that will contain a temporary directory.
 	 * By default, builder will use the system's temporary directory prefix.
