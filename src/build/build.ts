@@ -4,6 +4,7 @@ import JSON5 from "json5";
 import packageConfig from "../../package.json";
 import { resolveAndValidateUserConfig, type BuildConfig } from "./build-config";
 import { BuildSystem, type BuildSystemContext } from "./build-system";
+import { delay } from "@/utils/timeout";
 
 /**
  * Asynchronously builds the project based on the configuration.
@@ -75,11 +76,11 @@ export const build = async (
 	try {
 		await buildSystem.runAndClose();
 	} catch (error) {
-		logger.error(`Unexpected build system error: ${error}`);
-		throw error;
+		logger.error(`Critical build system error: ${error}`);
+		return;
 	}
 
-	await new Promise<void>((resolve) => setTimeout(resolve, 5));
+	await delay(5); // Wait a little bit
 
 	const endSentences: string[] = [
 		"*Builder has left the chat*",

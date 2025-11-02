@@ -66,23 +66,27 @@ export class BuildSystem implements AsyncDisposable {
 	}
 
 	async close(): Promise<void> {
-		if (this._isClosed) return;
+		try {
+			if (this._isClosed) return;
 
-		this._isClosed = true;
+			this._isClosed = true;
 
-		if (this._currentController) {
-			this.ctx.logger.debug("Aborting current build operation...");
-			this._currentController?.abort();
+			if (this._currentController) {
+				this.ctx.logger.debug("Aborting current build operation...");
+				this._currentController?.abort();
+			}
+
+			if (this._closeResolve) {
+				this._closeResolve();
+				this._closeResolve = undefined;
+			}
+
+			this.ctx.logger.debug(`Cleaning up temporal directory: ${this.ctx.tempDir.path}`);
+
+			await this.ctx.tempDir.cleanup();
+		} catch (error) {
+			this.ctx.logger.error(`Failed to cleanup: ${error}`);
 		}
-
-		if (this._closeResolve) {
-			this._closeResolve();
-			this._closeResolve = undefined;
-		}
-
-		this.ctx.logger.debug(`Cleaning up temporal directory: ${this.ctx.tempDir.path}`);
-
-		await this.ctx.tempDir.cleanup();
 	}
 
 	async runAndClose(): Promise<void> {
@@ -99,6 +103,11 @@ export class BuildSystem implements AsyncDisposable {
 		try {
 			await this.build();
 		} catch (error) {
+			if (error instanceof Error && error.name === "AbortError") {
+				this.ctx.logger.warn("Build aborted.");
+				return; // Return immediately because it's probably keyboard interrupt
+			}
+
 			this.ctx.logger.error(`Build failed. Closing build system...`);
 
 			try {
@@ -118,7 +127,7 @@ export class BuildSystem implements AsyncDisposable {
 		await this.watch();
 	}
 
-	private async build(limitCheckPaths?: Set<string>): Promise<{ isAborted?: boolean }> {
+	private async build(limitCheckPaths?: Set<string>): Promise<void> {
 		this._currentController = new AbortController();
 		const { signal } = this._currentController;
 
@@ -131,41 +140,37 @@ export class BuildSystem implements AsyncDisposable {
 		try {
 			const startTime = performance.now();
 
-			const bpPromise = this._bpBuilder ? this._bpBuilder?.build(execCtx) : null;
-			const rpPromise = this._rpBuilder ? this._rpBuilder?.build(execCtx) : null;
-
-			const [bpResult, rpResult] = await Promise.allSettled([bpPromise, rpPromise]);
+			await this.buildPacks(execCtx);
 
 			const endTime = performance.now();
 			const totalTimeStr = `${(endTime - startTime).toFixed(2)}ms`;
 
-			const isAborted =
-				(bpResult.status === "rejected" && bpResult.reason.name === "AbortError") ||
-				(rpResult.status === "rejected" && rpResult.reason.name === "AbortError");
-
-			if (isAborted) {
-				this.ctx.logger.warn(`One or more pack builders have been aborted.`);
-			} else {
-				this.ctx.logger.success(`Build finished successfully in ${totalTimeStr}.`);
-			}
-
-			return {
-				isAborted,
-			};
+			this.ctx.logger.success(`Build finished successfully in ${totalTimeStr}.`);
 		} finally {
 			this._currentController = undefined;
 		}
 	}
 
+	private async buildPacks(execCtx: BuildExecutionContext): Promise<void> {
+		const bpPromise = this._bpBuilder ? this._bpBuilder?.build(execCtx) : null;
+		const rpPromise = this._rpBuilder ? this._rpBuilder?.build(execCtx) : null;
+		await Promise.all([bpPromise, rpPromise]);
+	}
+
 	private async rebuild(limitCheckPaths: Set<string>): Promise<void> {
 		if (this._currentController) {
-			this.ctx.logger.warn("Aborting current (re)build execution...");
+			if (this._currentController.signal.aborted) {
+				this.ctx.logger.debug("Still trying to abort!");
+				return;
+			}
+
+			this.ctx.logger.warn("Aborting current build execution before starting rebuild...");
 			this._currentController.abort();
 
 			// Wait for this._currentController to be undefined
 			await new Promise<void>((resolve) => {
 				const timeout = setInterval(() => {
-					if (this._currentController) return; // Still not finished
+					if (this._currentController) return; // Still not aborted
 					clearInterval(timeout);
 					resolve();
 				}, 10);
@@ -174,11 +179,16 @@ export class BuildSystem implements AsyncDisposable {
 
 		this.ctx.logger.info("Starting rebuild...");
 
-		const result = await this.build(new Set(limitCheckPaths));
+		try {
+			await this.build(new Set(limitCheckPaths));
 
-		if (!result.isAborted) {
-			limitCheckPaths.clear(); // Reset path check limits if build was not aborted
+			limitCheckPaths.clear(); // Reset path check limits
 			this.ctx.logger.info("Watching for file changes...");
+		} catch (error) {
+			const buildAborted = error instanceof Error && error.name === "AbortError";
+			if (!buildAborted) {
+				this.ctx.logger.error(`Rebuild failed: ${error}`);
+			}
 		}
 	}
 
