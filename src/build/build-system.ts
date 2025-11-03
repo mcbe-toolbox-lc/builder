@@ -3,6 +3,7 @@ import * as chokidar from "chokidar";
 import path from "node:path";
 import pDebounce from "p-debounce";
 import tmp from "tmp-promise";
+import { createArchive, type ArchiveSource } from "./archive";
 import type { BuildConfig } from "./build-config";
 import { PackBuilder } from "./pack-builder";
 
@@ -144,6 +145,10 @@ export class BuildSystem implements AsyncDisposable {
 
 			await this.buildPacks(execCtx);
 
+			signal.throwIfAborted();
+
+			await this.createArchives(execCtx);
+
 			const endTime = performance.now();
 			const totalTimeStr = `${(endTime - startTime).toFixed(2)}ms`;
 
@@ -157,6 +162,26 @@ export class BuildSystem implements AsyncDisposable {
 		const bpPromise = this._bpBuilder ? this._bpBuilder?.build(execCtx) : null;
 		const rpPromise = this._rpBuilder ? this._rpBuilder?.build(execCtx) : null;
 		await Promise.all([bpPromise, rpPromise]);
+	}
+
+	private async createArchives(execCtx: BuildExecutionContext): Promise<void> {
+		const archiveOptions = this.ctx.config.archives;
+
+		this.ctx.logger.debug(`Creating ${archiveOptions.length} archives...`);
+
+		const promises = archiveOptions.map(async (opts) => {
+			const sources: ArchiveSource[] = [];
+			if (this._bpBuilder) sources.push({ path: this._bpBuilder.outDir, name: "bp" });
+			if (this._rpBuilder) sources.push({ path: this._rpBuilder.outDir, name: "rp" });
+
+			try {
+				await createArchive(sources, opts, this.ctx.logger, execCtx.signal);
+			} catch (error) {
+				this.ctx.logger.error(`Failed to create archive: ${error}`);
+			}
+		});
+
+		await Promise.all(promises);
 	}
 
 	private async rebuild(limitCheckPaths: Set<string>): Promise<void> {
