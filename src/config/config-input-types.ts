@@ -1,4 +1,5 @@
 import type { LogLevel } from "@/types/misc";
+import type * as esbuild from "esbuild";
 
 type CommonPackConfigProps = {
 	/** Specifies the source directory of the pack. */
@@ -15,8 +16,39 @@ type CommonPackConfigProps = {
 	exclude?: string[];
 };
 
+export type BehaviorPackScriptOptions = {
+	/** Specifies the path to the main behavior pack script file. */
+	entry: string;
+	/**
+	 * Whether to bundle referenced scripts into one file. Enable this if you want to use
+	 * third-party npm packages in your scripts.
+	 * @default false
+	 */
+	bundle?: boolean;
+	/**
+	 * Whether to minify scripts for less file size. Only applicable when `bundle` is true.
+	 * __Can be buggy!__
+	 * @default false
+	 */
+	minify?: boolean;
+	/**
+	 * Whether to generate source maps alongside compilation. Enable this if you need to debug
+	 * TypeScript using [the Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=mojang-studios.minecraft-debugger).
+	 * @default false
+	 */
+	sourceMap?: boolean;
+	/**
+	 * Specifies the path to the tsconfig file. You don't need to specify if you have the file at
+	 * the standard location `(project-root)/tsconfig.json`.
+	 */
+	tsconfig?: string;
+	/** Override common esbuild options. */
+	esbuildOptions?: esbuild.CommonOptions;
+};
+
 export type BehaviorPackConfigInput = CommonPackConfigProps & {
-	// TODO: Behavior pack-specific properties
+	/** Options related to compilation of behavior pack scripts. */
+	scripts?: BehaviorPackScriptOptions;
 };
 
 export type ResourcePackConfigInput = CommonPackConfigProps & {
