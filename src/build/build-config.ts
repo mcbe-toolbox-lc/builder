@@ -1,4 +1,8 @@
-import type { ArchiveOptions, ConfigInput } from "@/config/config-input-types";
+import type {
+	ArchiveOptions,
+	BehaviorPackScriptOptions,
+	ConfigInput,
+} from "@/config/config-input-types";
 import type { LogLevel } from "@/types/misc";
 import path from "node:path";
 
@@ -11,6 +15,7 @@ type CommonPackConfigProps = {
 
 export type BPConfig = CommonPackConfigProps & {
 	type: "behavior";
+	scripts?: BehaviorPackScriptOptions;
 };
 
 export type RPConfig = CommonPackConfigProps & {
@@ -46,6 +51,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				targetDirs: resolveTargetDir(bpInput.targetDir),
 				include: bpInput.include,
 				exclude: bpInput.exclude,
+				scripts: bpInput.scripts,
 			}
 		: undefined;
 
