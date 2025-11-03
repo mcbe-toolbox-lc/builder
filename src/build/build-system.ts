@@ -37,6 +37,7 @@ export class BuildSystem implements AsyncDisposable {
 
 		if (config.bpConfig) {
 			this._bpBuilder = new PackBuilder(
+				ctx,
 				config.bpConfig,
 				"bp",
 				createLogger({
@@ -47,6 +48,7 @@ export class BuildSystem implements AsyncDisposable {
 		}
 		if (config.rpConfig) {
 			this._rpBuilder = new PackBuilder(
+				ctx,
 				config.rpConfig,
 				"rp",
 				createLogger({
