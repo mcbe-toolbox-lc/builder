@@ -5,6 +5,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { BehaviorPackScriptOptions } from "@/config/config-input-types";
 
+export const SCRIPT_FILE_EXTENSIONS: readonly string[] = [
+	// JavaScript
+	".js",
+	".cjs",
+	".mjs",
+	".jsx",
+	// TypeScript
+	".ts",
+	".cts",
+	".mts",
+	".tsx",
+];
+
 const createCustomWritePlugin = (sourceRoot: string): esbuild.Plugin => {
 	const onEnd = async (result: esbuild.BuildResult) => {
 		if (!result.outputFiles) return;
