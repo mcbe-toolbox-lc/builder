@@ -5,6 +5,7 @@ import JSON5 from "json5";
 import path from "node:path";
 import type { PackConfig } from "./build-config";
 import type { BuildExecutionContext, BuildSystemContext } from "./build-system";
+import { bundleScripts, SCRIPT_FILE_EXTENSIONS } from "./script-bundling";
 
 type Cache = {
 	[filePath: string]: {
@@ -69,15 +70,28 @@ export class PackBuilder {
 
 		const fileProcessingPromises: Promise<void>[] = [];
 
+		let shouldBundleScripts = false;
+
 		for (const change of changes) {
+			const extname = path.extname(change.filePath);
+
+			if (
+				!shouldBundleScripts &&
+				this.config.type === "behavior" &&
+				this.config.scripts &&
+				SCRIPT_FILE_EXTENSIONS.includes(extname)
+			) {
+				shouldBundleScripts = true;
+				continue; // Let the bundler handle script files
+			}
+
 			fileProcessingPromises.push(this.applyFileChange(ctx, change));
 		}
 
 		this.logger.debug(`Applying ${fileProcessingPromises.length} file changes...`);
 
 		await Promise.all(fileProcessingPromises);
-
-		// TODO: Script bundling, texture list generation, etc.
+		await this.bundleScriptsIfNeeded(shouldBundleScripts);
 
 		const targetDirs = this.config.targetDirs;
 		if (targetDirs.length > 0) {
@@ -194,6 +208,17 @@ export class PackBuilder {
 
 		const parent = path.dirname(dir);
 		this.recursivelyRemoveDirIfEmpty(parent, stopAt);
+	}
+
+	private async bundleScriptsIfNeeded(shouldBundle: boolean): Promise<void> {
+		if (!shouldBundle || this.config.type !== "behavior" || !this.config.scripts) return;
+
+		this.logger.debug("Bundling scripts...");
+
+		const sourceRoot = path.join(this.config.srcDir, "scripts");
+		const outDir = path.join(this.outDir, "scripts");
+		await fs.rm(outDir, { recursive: true, force: true });
+		await bundleScripts(sourceRoot, outDir, this.config.scripts);
 	}
 
 	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
