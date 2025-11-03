@@ -167,7 +167,9 @@ export class BuildSystem implements AsyncDisposable {
 	private async createArchives(execCtx: BuildExecutionContext): Promise<void> {
 		const archiveOptions = this.ctx.config.archives;
 
-		this.ctx.logger.debug(`Creating ${archiveOptions.length} archives...`);
+		if (archiveOptions.length <= 0) return;
+
+		this.ctx.logger.debug(`Creating ${archiveOptions.length} archive(s)...`);
 
 		const promises = archiveOptions.map(async (opts) => {
 			const sources: ArchiveSource[] = [];
