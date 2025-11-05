@@ -99,7 +99,7 @@ const createEsbuildOptions = (
 	return esbuildOpts;
 };
 
-export const bundleScripts = async (
+export const buildScripts = async (
 	sourceRoot: string,
 	outDir: string,
 	options: BehaviorPackScriptOptions,

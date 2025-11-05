@@ -5,7 +5,7 @@ import JSON5 from "json5";
 import path from "node:path";
 import type { PackConfig } from "./build-config";
 import type { BuildExecutionContext, BuildSystemContext } from "./build-system";
-import { bundleScripts, SCRIPT_FILE_EXTENSIONS } from "./script-bundling";
+import { buildScripts, SCRIPT_FILE_EXTENSIONS } from "./scripts";
 
 type Cache = {
 	[filePath: string]: {
@@ -231,7 +231,7 @@ export class PackBuilder {
 		const sourceRoot = path.join(this.config.srcDir, "scripts");
 		const outDir = path.join(this.outDir, "scripts");
 		await fs.rm(outDir, { recursive: true, force: true });
-		await bundleScripts(sourceRoot, outDir, this.config.scripts);
+		await buildScripts(sourceRoot, outDir, this.config.scripts);
 	}
 
 	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
