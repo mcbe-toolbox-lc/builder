@@ -95,17 +95,29 @@ export class PackBuilder {
 			throw new Error(`Failed to apply file changes: ${error}`);
 		}
 
+		ctx.signal?.throwIfAborted();
+
 		try {
 			await this.compileScriptsIfNeeded(shouldBundleScripts);
 		} catch (error) {
 			throw new Error(`Failed to compile scripts: ${error}`);
 		}
 
+		ctx.signal?.throwIfAborted();
+
+		try {
+			await this.writeManifestIfNeeded();
+		} catch (error) {
+			throw new Error(`Failed to write manifest: ${error}`);
+		}
+
+		ctx.signal?.throwIfAborted();
+
 		const targetDirs = this.config.targetDirs;
 		if (targetDirs.length > 0) {
 			this.logger.debug(`Copying the output to ${targetDirs.length} target directory(s)...`);
 			try {
-				await this.copyOutputToTargetDirs(ctx);
+				await this.copyOutputToTargetDirs();
 			} catch (error) {
 				// Copy failure is not critical, so don't throw.
 				this.logger.error(`Failed to copy output to target dirs: ${error}`);
@@ -234,7 +246,26 @@ export class PackBuilder {
 		await buildScripts(sourceRoot, outDir, this.config.scripts);
 	}
 
-	private async copyOutputToTargetDirs(ctx: BuildExecutionContext): Promise<void> {
+	private async writeManifestIfNeeded(): Promise<void> {
+		if (!this.config.manifest) return;
+
+		const filePath = path.join(this.outDir, "manifest.json");
+
+		if (await fs.pathExists(filePath)) {
+			this.logger.warn(
+				"Something already exists at manifest.json path. Custom manifest will not be written.",
+			);
+			return;
+		}
+
+		this.logger.debug("Writing manifest...");
+
+		const manifestJson = JSON.stringify(this.config.manifest, null, 2);
+
+		await fs.outputFile(filePath, manifestJson, "utf8");
+	}
+
+	private async copyOutputToTargetDirs(): Promise<void> {
 		if (!(await fs.pathExists(this.outDir))) return;
 		const promises = this.config.targetDirs.map(async (targetDir) => {
 			await fs.rm(targetDir, { recursive: true, force: true });
