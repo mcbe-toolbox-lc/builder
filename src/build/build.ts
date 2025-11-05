@@ -83,10 +83,12 @@ export const build = async (
 	await delay(5); // Wait a little bit
 
 	const endSentences: string[] = [
-		"*The builder has left the chat*",
-		"*The builder has quit the game*",
-		"*The builder has refused to elaborate further*",
-		"*The builder went to workout*",
+		"*The builder leaves the chat*",
+		"*The builder quietly leaves*",
+		"*The builder quits the game*",
+		"*The builder refuses to elaborate further*",
+		"*The builder goes to sleep*",
+		"*The builder wants to see you again*",
 	];
 
 	const randomIndex: number = Math.floor(Math.random() * endSentences.length);
