@@ -18,6 +18,8 @@ type FileChange = {
 	filePath: string;
 };
 
+const TEXTURES_DIR_PREFIX = "textures/";
+
 export class PackBuilder {
 	readonly outDir: string;
 	private lastCache: Cache = {};
@@ -71,9 +73,11 @@ export class PackBuilder {
 		const fileProcessingPromises: Promise<void>[] = [];
 
 		let shouldBundleScripts = false;
+		let shouldGenerateTextureList = false;
 
 		for (const change of changes) {
 			const extname = path.extname(change.filePath);
+			const relativePath = path.relative(this.config.srcDir, change.filePath).replaceAll("\\", "/");
 
 			if (
 				!shouldBundleScripts &&
@@ -83,6 +87,14 @@ export class PackBuilder {
 			) {
 				shouldBundleScripts = true;
 				continue; // Let the bundler handle script files
+			}
+
+			if (
+				!shouldGenerateTextureList &&
+				relativePath.startsWith(TEXTURES_DIR_PREFIX) &&
+				extname === ".png"
+			) {
+				shouldGenerateTextureList = true;
 			}
 
 			fileProcessingPromises.push(this.applyFileChange(ctx, change));
@@ -101,6 +113,14 @@ export class PackBuilder {
 			await this.compileScriptsIfNeeded(shouldBundleScripts);
 		} catch (error) {
 			throw new Error(`Failed to compile scripts: ${error}`);
+		}
+
+		ctx.signal?.throwIfAborted();
+
+		try {
+			await this.generateTextureListIfNeeded(ctx, shouldGenerateTextureList);
+		} catch (error) {
+			throw new Error(`Failed to generate texture list: ${error}`);
 		}
 
 		ctx.signal?.throwIfAborted();
@@ -244,6 +264,36 @@ export class PackBuilder {
 		const outDir = path.join(this.outDir, "scripts");
 		await fs.rm(outDir, { recursive: true, force: true });
 		await buildScripts(sourceRoot, outDir, this.config.scripts);
+	}
+
+	private async generateTextureListIfNeeded(
+		ctx: BuildExecutionContext,
+		shouldGenerate: boolean,
+	): Promise<void> {
+		if (!shouldGenerate || this.config.type !== "resource" || !this.config.generateTextureList)
+			return;
+
+		const texturesDir = path.join(this.outDir, TEXTURES_DIR_PREFIX);
+		const listFilePath = path.join(texturesDir, "texture_list.json");
+
+		this.logger.debug("Generating texture list...");
+
+		const textureEntries = await fs.readdir(texturesDir, { recursive: true, withFileTypes: true });
+		const textureList: string[] = [];
+
+		for (const entry of textureEntries) {
+			if (!entry.isFile()) continue;
+
+			const extname = path.extname(entry.name);
+			if (extname !== ".png") continue;
+
+			const filePath = path.relative(this.outDir, path.join(entry.parentPath, entry.name));
+			const value = `${filePath.replaceAll("\\", "/").replace(/\.[^/.]+$/, "")}`;
+			textureList.push(value);
+		}
+
+		const json = JSON.stringify(textureList, null, 2);
+		await fs.outputFile(listFilePath, json);
 	}
 
 	private async writeManifestIfNeeded(ctx: BuildExecutionContext): Promise<void> {
