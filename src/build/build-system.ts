@@ -88,7 +88,7 @@ export class BuildSystem implements AsyncDisposable {
 
 			await this.ctx.tempDir.cleanup();
 		} catch (error) {
-			this.ctx.logger.error(`Failed to cleanup: ${error}`);
+			this.ctx.logger.error(`Failed to close: ${error}`);
 		}
 	}
 
