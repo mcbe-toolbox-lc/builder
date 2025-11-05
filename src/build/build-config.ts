@@ -21,6 +21,7 @@ export type BPConfig = CommonPackConfigProps & {
 
 export type RPConfig = CommonPackConfigProps & {
 	type: "resource";
+	generateTextureList: boolean;
 };
 
 export type PackConfig = BPConfig | RPConfig;
@@ -65,6 +66,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				manifest: rpInput.manifest,
 				include: rpInput.include,
 				exclude: rpInput.exclude,
+				generateTextureList: rpInput.generateTextureList ?? false,
 			}
 		: undefined;
 
