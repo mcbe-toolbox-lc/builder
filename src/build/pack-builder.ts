@@ -23,7 +23,7 @@ export class PackBuilder {
 	private lastCache: Cache = {};
 
 	constructor(
-		private readonly buildSystemCtx: BuildSystemContext,
+		buildSystemCtx: BuildSystemContext,
 		readonly config: PackConfig,
 		private readonly name: string,
 		private readonly logger: Logger,
@@ -89,14 +89,27 @@ export class PackBuilder {
 		}
 
 		this.logger.debug(`Applying ${fileProcessingPromises.length} file changes...`);
+		try {
+			await Promise.all(fileProcessingPromises);
+		} catch (error) {
+			throw new Error(`Failed to apply file changes: ${error}`);
+		}
 
-		await Promise.all(fileProcessingPromises);
-		await this.bundleScriptsIfNeeded(shouldBundleScripts);
+		try {
+			await this.compileScriptsIfNeeded(shouldBundleScripts);
+		} catch (error) {
+			throw new Error(`Failed to compile scripts: ${error}`);
+		}
 
 		const targetDirs = this.config.targetDirs;
 		if (targetDirs.length > 0) {
 			this.logger.debug(`Copying the output to ${targetDirs.length} target directory(s)...`);
-			await this.copyOutputToTargetDirs(ctx);
+			try {
+				await this.copyOutputToTargetDirs(ctx);
+			} catch (error) {
+				// Copy failure is not critical, so don't throw.
+				this.logger.error(`Failed to copy output to target dirs: ${error}`);
+			}
 		}
 
 		return { newCache };
@@ -210,10 +223,10 @@ export class PackBuilder {
 		this.recursivelyRemoveDirIfEmpty(parent, stopAt);
 	}
 
-	private async bundleScriptsIfNeeded(shouldBundle: boolean): Promise<void> {
+	private async compileScriptsIfNeeded(shouldBundle: boolean): Promise<void> {
 		if (!shouldBundle || this.config.type !== "behavior" || !this.config.scripts) return;
 
-		this.logger.debug("Bundling scripts...");
+		this.logger.debug("Compiling scripts...");
 
 		const sourceRoot = path.join(this.config.srcDir, "scripts");
 		const outDir = path.join(this.outDir, "scripts");
