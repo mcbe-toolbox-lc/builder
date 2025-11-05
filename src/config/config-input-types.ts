@@ -10,6 +10,11 @@ type CommonPackConfigProps = {
 	 * Builder will first perform all work in a temporary directory and then copy the output.
 	 */
 	targetDir: string | string[];
+	/**
+	 * A custom pack manifest object that will be stringified to JSON and written to `manifest.json`
+	 * at the top of the output directory.
+	 */
+	manifest?: Record<string, unknown>;
 	/** An array of glob patterns or file paths to explicitly __include__ in the build. */
 	include?: string[];
 	/** An array of glob patterns or file paths to explicitly __exclude__ from the build. */
