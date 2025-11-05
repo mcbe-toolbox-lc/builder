@@ -57,7 +57,7 @@ export class PackBuilder {
 			throw new Error(`Source directory not found at ${this.config.srcDir}`);
 		}
 
-		await fs.ensureDir(this.outDir);
+		if (ctx.isInitialBuild) await fs.ensureDir(this.outDir);
 
 		this.logger.debug("Detecting source tree changes...");
 
@@ -106,7 +106,7 @@ export class PackBuilder {
 		ctx.signal?.throwIfAborted();
 
 		try {
-			await this.writeManifestIfNeeded();
+			await this.writeManifestIfNeeded(ctx);
 		} catch (error) {
 			throw new Error(`Failed to write manifest: ${error}`);
 		}
@@ -246,8 +246,12 @@ export class PackBuilder {
 		await buildScripts(sourceRoot, outDir, this.config.scripts);
 	}
 
-	private async writeManifestIfNeeded(): Promise<void> {
+	private async writeManifestIfNeeded(ctx: BuildExecutionContext): Promise<void> {
 		if (!this.config.manifest) return;
+		if (!ctx.isInitialBuild) {
+			this.logger.debug("Custom manifest will not be written for rebuilds.");
+			return;
+		}
 
 		const filePath = path.join(this.outDir, "manifest.json");
 
