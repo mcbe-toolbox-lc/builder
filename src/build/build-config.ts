@@ -9,6 +9,7 @@ import path from "node:path";
 type CommonPackConfigProps = {
 	srcDir: string;
 	targetDirs: string[];
+	manifest?: Record<string, unknown>;
 	include?: string[];
 	exclude?: string[];
 };
@@ -49,6 +50,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				type: "behavior",
 				srcDir: path.resolve(bpInput.srcDir),
 				targetDirs: resolveTargetDir(bpInput.targetDir),
+				manifest: bpInput.manifest,
 				include: bpInput.include,
 				exclude: bpInput.exclude,
 				scripts: bpInput.scripts,
@@ -60,6 +62,7 @@ export const resolveAndValidateUserConfig = (input: ConfigInput): BuildConfig =>
 				type: "resource",
 				srcDir: path.resolve(rpInput.srcDir),
 				targetDirs: resolveTargetDir(rpInput.targetDir),
+				manifest: rpInput.manifest,
 				include: rpInput.include,
 				exclude: rpInput.exclude,
 			}
