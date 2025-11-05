@@ -22,8 +22,9 @@ export type BuildSystemContext = {
  */
 export type BuildExecutionContext = {
 	parentCtx: BuildSystemContext;
+	isInitialBuild: boolean;
+	signal: AbortSignal;
 	limitCheckPaths?: Set<string>;
-	signal?: AbortSignal;
 };
 
 export class BuildSystem implements AsyncDisposable {
@@ -130,14 +131,15 @@ export class BuildSystem implements AsyncDisposable {
 		await this.watch();
 	}
 
-	private async build(limitCheckPaths?: Set<string>): Promise<void> {
+	private async build(execCtxOverrides?: Partial<BuildExecutionContext>): Promise<void> {
 		this._currentController = new AbortController();
 		const { signal } = this._currentController;
 
 		const execCtx: BuildExecutionContext = {
 			parentCtx: this.ctx,
-			limitCheckPaths,
+			isInitialBuild: true,
 			signal,
+			...execCtxOverrides,
 		};
 
 		try {
@@ -209,7 +211,7 @@ export class BuildSystem implements AsyncDisposable {
 		this.ctx.logger.info("Starting rebuild...");
 
 		try {
-			await this.build(new Set(limitCheckPaths));
+			await this.build({ isInitialBuild: false, limitCheckPaths });
 
 			limitCheckPaths.clear(); // Reset path check limits
 			this.ctx.logger.info("Watching for file changes...");
