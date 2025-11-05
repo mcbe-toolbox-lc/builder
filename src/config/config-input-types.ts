@@ -57,7 +57,12 @@ export type BehaviorPackConfigInput = CommonPackConfigProps & {
 };
 
 export type ResourcePackConfigInput = CommonPackConfigProps & {
-	// TODO: Resource pack-specific properties
+	/**
+	 * Specifies whether to generate the [texture_list.json](https://wiki.bedrock.dev/concepts/textures-list)
+	 * file that contains the list of all textures in the resource pack.
+	 * @default false
+	 */
+	generateTextureList?: boolean;
 };
 
 export type ArchiveOptions = {
