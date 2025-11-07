@@ -1,9 +1,23 @@
 # @mcbe-toolbox-lc/builder
 
-A build tool for transforming and copying Minecraft Bedrock add-on files. :hammer:
+Builder is a build tool that streamlines Minecraft Bedrock add-on development by letting you
+organize your pack files in a separate, **isolated project directory** instead of directly within
+the restrictive com.mojang folder.
 
-Builder basically just "compiles" the source directory to the target you specify. Most of what happens
-during this operation is simple file copying, but that's not enough for modern add-on development,
-so it also has some useful extra features like JSON5 conversion and script compilation (bundling)! :eyes:
+Builder "compiles" your packs and **copies the final output** to the necessary com.mojang
+development folders so Minecraft can load them.
 
-TODO
+This workflow <ins>simplifies development, enables easy third-party tool integration,
+and allows for proper version control (with Git)</ins>.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/en/download) (v22 or later)
+
+## Installation
+
+Run this command in your project directory to install builder:
+
+```bash
+npm install @mcbe-toolbox-lc/builder --save-dev
+```
