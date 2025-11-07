@@ -28,5 +28,23 @@ npm install @mcbe-toolbox-lc/builder --save-dev
 Builder has no interface other than a public `build()` function that initiates a build operation
 based on the configuration object provided as an argument.
 
-You have to create a JavaScript file that imports the function and calls it,
-then execute the file using the `node` command.
+You have to create a JavaScript/TypeScript file that imports the function and calls it,
+then execute the file using the `node` command (or [tsx](https://tsx.is/) for TypeScript).
+
+```javascript
+import * as builder from "@mcbe-toolbox-lc/builder";
+
+// Please look at intellisense and JSDoc for details.
+
+await builder.build({
+  behaviorPack: {
+    srcDir: "src/bp",
+    targetDir: "dist/bp",
+  },
+  resourcePack: {
+    srcDir: "src/rp",
+    targetDir: "dist/rp",
+  },
+  watch: true,
+});
+```
