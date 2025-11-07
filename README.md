@@ -14,10 +14,16 @@ and allows for proper version control (with Git)</ins>.
 
 - [Node.js](https://nodejs.org/en/download) (v22 or later)
 
-## Installation
+## Usage
 
-Run this command in your project directory to install builder:
+Run the following command in your project directory to install builder:
 
 ```bash
 npm install @mcbe-toolbox-lc/builder --save-dev
 ```
+
+Builder has no interface other than a public `build()` function that initiates a build operation
+based on the configuration object provided as an argument.
+
+You have to create a JavaScript file that imports the function and calls it,
+then execute the file using the `node` command.
