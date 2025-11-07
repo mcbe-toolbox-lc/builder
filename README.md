@@ -1,5 +1,8 @@
 # @mcbe-toolbox-lc/builder
 
+[![NPM Version](https://img.shields.io/npm/v/%40mcbe-toolbox-lc%2Fbuilder)](https://www.npmjs.com/package/@mcbe-toolbox-lc/builder)
+[![GitHub Tag](https://img.shields.io/github/v/tag/mcbe-toolbox-lc/builder)](https://github.com/mcbe-toolbox-lc/builder/tags)
+
 Builder is a build tool that streamlines Minecraft Bedrock add-on development by letting you
 organize your pack files in a separate, **isolated project directory** instead of directly within
 the restrictive com.mojang folder.
