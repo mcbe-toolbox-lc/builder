@@ -2,6 +2,7 @@
 	"name": "@mcbe-toolbox-lc/builder",
 	"version": "0.1.0",
 	"license": "0BSD",
+	"description": "Build tool for Minecraft Bedrock packs and add-ons.",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/mcbe-toolbox-lc/builder.git"
